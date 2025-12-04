@@ -1,73 +1,45 @@
-# React + TypeScript + Vite
+# Dots (team-based replicator sim)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Vibe coded by Codex](https://img.shields.io/badge/vibe%20coded%20by-codex-5f9eff?style=for-the-badge&logo=github)](#)
 
-Currently, two official plugins are available:
+Team cultures spread across a grid, self-replicate, form lines, and crack each other with bombs while shuttling nutrients through wall “vessels.” Two teams (blue/green) can be seeded; each tick runs deterministic rules, while nutrients flow on a faster timeline.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## How to run
 
-## React Compiler
+- `npm install`
+- `npm run dev` and open the shown URL.
+- Build: `npm run build`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Controls
 
-## Expanding the ESLint configuration
+- Palette: drag a Blue/Green dot or producer chip onto an empty cell (or click a chip, then click a cell).
+- Start/Pause, Step once (while paused), Reset, and Tick speed slider.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Core rules (teams)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Seeding**: placing a chip creates a team dot (or a producer if you dragged a producer chip).
+- **Replication**: each dot/producer tries one random cardinal neighbor per rule tick. If empty, it spawns a same-team dot. If that neighbor is a dot/producer, it tries the next cell in the same direction. If targeting an enemy, it attacks: defender health absorbs first; at 0 health, attacker takes the cell.
+- **5-in-a-row pressure**: any 5-dot/-producer line of the same team pushes the center (3rd) to a free cardinal cell; otherwise, it bursts.
+- **Burst**: center disappears; corners become team dots if empty, or team blocks if occupied (enemy or friendly). Blocks are uninhabitable.
+- **Bombs**: a dot/producer surrounded by 4+ enemy blocks arms → hot → explodes. Explosion clears nearby cells with a small survival chance; blocks are destroyed too.
+- **Walls/blocks**: team-tinted; serve as vessels for nutrients.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Nutrients & vessels
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Flow loop**: nutrients move along connected wall cells on a fast timer. Producers emit nutrients into adjacent walls.
+- **Dead ends**: when a nutrient reaches a wall dead end, it looks for adjacent friendly dots:
+  - If found, it feeds that dot (+1 health up to 3).
+  - If the fed dot touches any enemy, it simply becomes stronger (thicker ring).
+  - If no adjacent enemies, the fed dot converts into a producer.
+  - If no friendly dots adjacent, the nutrient dissipates.
+- **Capture defense**: health absorbs attacks; when an enemy targets a cell with health > 0, health is reduced by 1 and the takeover fails. At 0, normal capture applies.
+- **Vessel overlay**: wall centers are connected with team-colored lines drawn atop the grid for clarity.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## States & visuals
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Dot (team color), Strong dot (health ring), Producer (glowing core), Block/Wall (team-textured), Bomb (yellow → red with team outline), Nutrient (tiny dot on walls).
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Notes
+
+- Grid is 24×24, no wrapping.
+- Rules are deterministic per tick; nutrients move independently on a faster interval.
